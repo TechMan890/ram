@@ -4,30 +4,48 @@ executors:
   docker-executor:
     docker:
       - image: cimg/node:16.20.0
+  playwright-executor:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.44.1-focal
 
 jobs:
   build-and-push:
     executor: docker-executor
     steps:
       - checkout
-
       - setup_remote_docker:
           version: 20.10.18
-
       - run:
           name: Build Docker image
           command: |
             docker build -t laksh061/my-service:latest .
-
       - run:
           name: Log in to Docker Hub
           command: echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-
       - run:
           name: Push Docker image
           command: docker push laksh061/my-service:latest
+  playwright-e2e:
+    executor: playwright-executor
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm ci
+      - run:
+          name: Install Playwright Browsers
+          command: npx playwright install --with-deps
+      - run:
+          name: Run Playwright E2E tests
+          command: npx playwright test
+      - store_artifacts:
+          path: test-results
+          destination: playwright-test-results
 
 workflows:
   build:
     jobs:
       - build-and-push
+      - playwright-e2e:
+          requires:
+            - build-and-push
