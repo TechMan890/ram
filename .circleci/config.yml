@@ -17,13 +17,8 @@ jobs:
           command: |
             docker build -t laksh061/my-service:latest .
 
-      - run:
-          name: Log in to Docker Hub
-          command: echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-
-      - run:
-          name: Push Docker image
-          command: docker push laksh061/my-service:latest
+    
+    
 
 workflows:
   build:
